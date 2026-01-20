@@ -1,0 +1,61 @@
+services:
+  agent-container:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - docker-proxy
+    stdin_open: true
+    tty: true
+    environment:
+      - TERM=xterm-256color
+    secrets:
+      - cursor_api_key
+    # explicitly mount the projects directory to allow the agent to access the projects
+    volumes:
+      - /Users/marcher/Code:/home/cursor/projects
+    # set the filesystem to be read-only
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /home/cursor/.cache
+      - /home/cursor/.config
+      - /home/cursor/.cursor
+    # set resource limits
+    mem_limit: 2g
+    cpus: "2.0"
+    pids_limit: 256
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 4096
+
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - CONTAINERS=1
+      - LOGS=1
+      # disable everything else
+      - AUTH=0
+      - BUILD=0
+      - EVENTS=0
+      - EXEC=0
+      - IMAGES=0
+      - INFO=0
+      - NETWORKS=0
+      - POST=0
+      - SERVICES=0
+      - SESSIONS=0
+      - SWARM=0
+      - TASKS=0
+      - VOLUMES=0
+
+secrets:
+  cursor_api_key:
+    file: secrets/.cursor_api_key
